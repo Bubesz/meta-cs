@@ -452,7 +452,7 @@ using MetaDslx.Core;
                 }
                 TypeUseAnnotation __tmp30 = new TypeUseAnnotation();
                 __tmp30.SymbolTypes.Add(typeof(MetaClass));
-                __tmp30.ResolveFlags = ResolveFlags.Parent;
+                __tmp30.Location = ResolutionLocation.Parent;
                 elemAnnotList.Add(__tmp30);
             }
             this.HandleSymbolType(context);
@@ -3858,10 +3858,7 @@ using MetaDslx.Core;
             MetaModelParserPropertyEvaluator propertyEvaluator = new MetaModelParserPropertyEvaluator(this);
             propertyEvaluator.Visit(this.ParseTree);
             
-            foreach (var symbol in this.Data.GetSymbols())
-            {
-                symbol.MEvalLazyValues();
-            }
+            this.Model.EvalLazyValues();
             foreach (var symbol in this.Data.GetSymbols())
             {
                 if (symbol.MHasUninitializedValue())

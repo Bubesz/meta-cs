@@ -112,6 +112,7 @@ namespace MetaDslx.Core
                         MetaBuiltInTypes.types.Add(MetaInstance.Bool);
                         MetaBuiltInTypes.types.Add(MetaInstance.Void);
                         MetaBuiltInTypes.types.Add(MetaInstance.ModelObject);
+                        MetaBuiltInTypes.types.Add(MetaInstance.DefinitionList);
                         MetaBuiltInTypes.types.Add(MetaInstance.ModelObjectList);
                     }
                 }
@@ -145,14 +146,9 @@ namespace MetaDslx.Core
                         MetaBuiltInFunctions.functions.Add(MetaInstance.ResolveName2);
                         MetaBuiltInFunctions.functions.Add(MetaInstance.ResolveType1);
                         MetaBuiltInFunctions.functions.Add(MetaInstance.ResolveType2);
+                        MetaBuiltInFunctions.functions.Add(MetaInstance.ToDefinitionList);
                         MetaBuiltInFunctions.functions.Add(MetaInstance.Bind1);
                         MetaBuiltInFunctions.functions.Add(MetaInstance.Bind2);
-                        MetaBuiltInFunctions.functions.Add(MetaInstance.Bind3);
-                        MetaBuiltInFunctions.functions.Add(MetaInstance.Bind4);
-                        MetaBuiltInFunctions.functions.Add(MetaInstance.SelectOfType1);
-                        MetaBuiltInFunctions.functions.Add(MetaInstance.SelectOfType2);
-                        MetaBuiltInFunctions.functions.Add(MetaInstance.SelectOfName1);
-                        MetaBuiltInFunctions.functions.Add(MetaInstance.SelectOfName2);
                     }
                 }
                 return MetaBuiltInFunctions.functions;
@@ -255,6 +251,7 @@ namespace MetaDslx.Core
             ((ModelObject)type).MLazySet(MetaDescriptor.MetaFunctionType.ParameterTypesProperty, new Lazy<object>(() => new ModelMultiList<MetaType>((ModelObject)type, MetaDescriptor.MetaFunctionType.ParameterTypesProperty, @this.Parameters.Select(p => new Lazy<object>(() => p.Type))), LazyThreadSafetyMode.PublicationOnly));
             ((ModelObject)type).MLazySet(MetaDescriptor.MetaFunctionType.ReturnTypeProperty, new Lazy<object>(() => @this.ReturnType, LazyThreadSafetyMode.PublicationOnly));
             ((ModelObject)@this).MSet(MetaDescriptor.MetaFunction.TypeProperty, type);
+            //((ModelObject)type).MLazySet(MetaDescriptor.MetaFunctionType.ReturnTypeProperty, new Lazy<object>(() => @this.ReturnType, LazyThreadSafetyMode.PublicationOnly));
         }
 
         public override void MetaUnaryExpression(MetaUnaryExpression @this)
@@ -471,9 +468,15 @@ namespace MetaDslx.Core
             MetaPrimitiveType primitive = @this as MetaPrimitiveType;
             if (primitive != null)
             {
-                return primitive.Name;
+                return primitive.ToCSharpType();
             }
             return ((MetaNamedElement)@this).Name;
+        }
+
+        public static string ToCSharpType(this MetaPrimitiveType @this)
+        {
+            if (@this.Name == "DefinitionList") return "global::MetaDslx.Core.BindingInfo";
+            return @this.Name;
         }
 
         public static string CSharpFullName(this MetaType @this)
@@ -506,7 +509,7 @@ namespace MetaDslx.Core
             MetaPrimitiveType primitive = @this as MetaPrimitiveType;
             if (primitive != null)
             {
-                return primitive.Name;
+                return primitive.ToCSharpType();
             }
             MetaDeclaration decl = @this as MetaDeclaration;
             string nsName = string.Empty;
@@ -664,7 +667,7 @@ namespace MetaDslx.Core
             MetaPrimitiveType primitive = @this as MetaPrimitiveType;
             if (primitive != null)
             {
-                return primitive.Name;
+                return primitive.ToCSharpType();
             }
             return ((MetaNamedElement)@this).Name + "Impl";
         }
@@ -695,7 +698,7 @@ namespace MetaDslx.Core
             MetaPrimitiveType primitive = @this as MetaPrimitiveType;
             if (primitive != null)
             {
-                return primitive.Name;
+                return primitive.ToCSharpType();
             }
             return @this.CSharpFullName();
         }
@@ -829,7 +832,8 @@ namespace MetaDslx.Core
             if (@this.Name == "bool") return "boolean";
             if (@this.Name == "object") return "Object";
             if (@this.Name == "string") return "String";
-            else return @this.Name;
+            if (@this.Name == "DefinitionList") return "metadslx.core.BindingInfo";
+            return @this.Name;
         }
 
         public static string ToJavaNullableType(this MetaPrimitiveType @this)

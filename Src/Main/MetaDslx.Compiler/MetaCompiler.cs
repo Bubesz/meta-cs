@@ -64,10 +64,10 @@ namespace MetaDslx.Compiler
         public NameUseAnnotation()
         {
             this.SymbolTypes = new List<Type>();
-            this.ResolveFlags = ResolveFlags.All;
+            this.Location = ResolutionLocation.All;
         }
         public List<Type> SymbolTypes { get; set; }
-        public ResolveFlags ResolveFlags { get; set; }
+        public ResolutionLocation Location { get; set; }
     }
 
     public class TypeUseAnnotation
@@ -75,10 +75,10 @@ namespace MetaDslx.Compiler
         public TypeUseAnnotation()
         {
             this.SymbolTypes = new List<Type>();
-            this.ResolveFlags = ResolveFlags.All;
+            this.Location = ResolutionLocation.All;
         }
         public List<Type> SymbolTypes { get; set; }
-        public ResolveFlags ResolveFlags { get; set; }
+        public ResolutionLocation Location { get; set; }
     }
 
     public class TypeCtrAnnotation : SymbolBasedAnnotation
@@ -1556,35 +1556,35 @@ namespace MetaDslx.Compiler
                 if (tua != null)
                 {
                     List<IParseTree> names = this.GetNames(node);
-                    List<string> nameStrings = names.Select(n => this.GetName(n)).ToList();
                     ModelObject activeScopeSymbol = this.ActiveScopeSymbol;
                     ModelObject activeSymbol = this.ActiveSymbol;
                     PropertyAnnotation activeProperty = this.ActiveProperty;
+                    ResolutionInfo ri = new ResolutionInfo();
+                    ri.Kind = ResolveKind.Type;
+                    ri.Scopes.Add(activeScopeSymbol);
+                    ri.QualifiedNameNodes.AddRange(names);
+                    ri.Location = tua.Location;
+                    ri.SymbolTypes.AddRange(tua.SymbolTypes);
                     Func<ModelObject> lazySymbol =
-                        () =>
-                            this.Compiler.BindingProvider.Bind(null,
-                            this.FilterByTypes(
-                                this.Compiler.ResolutionProvider.Resolve(new ModelObject[] { activeScopeSymbol }, ResolveKind.Type, nameStrings, new ResolutionInfo() { Node = node }, tua.ResolveFlags),
-                                tua.SymbolTypes),
-                            new BindingInfo() { Node = node });
-                    Lazy<object> lazyValue = new Lazy<object>(lazySymbol, LazyThreadSafetyMode.ExecutionAndPublication);
+                        () => this.Compiler.BindingProvider.Bind(null, this.Compiler.ResolutionProvider.Resolve(ri));
+                    Lazy <object> lazyValue = new Lazy<object>(lazySymbol, LazyThreadSafetyMode.ExecutionAndPublication);
                     this.SetLazyProperty(node, activeSymbol, activeProperty, lazyValue);
                     this.Data.RegisterLazySymbol(node, lazyValue);
                 }
                 if (nua != null)
                 {
                     List<IParseTree> names = this.GetNames(node);
-                    List<string> nameStrings = names.Select(n => this.GetName(n)).ToList();
                     ModelObject activeScopeSymbol = this.ActiveScopeSymbol;
                     ModelObject activeSymbol = this.ActiveSymbol;
                     PropertyAnnotation activeProperty = this.ActiveProperty;
+                    ResolutionInfo ri = new ResolutionInfo();
+                    ri.Kind = ResolveKind.Name;
+                    ri.Scopes.Add(activeScopeSymbol);
+                    ri.QualifiedNameNodes.AddRange(names);
+                    ri.Location = nua.Location;
+                    ri.SymbolTypes.AddRange(nua.SymbolTypes);
                     Func<ModelObject> lazySymbol =
-                        () =>
-                            this.Compiler.BindingProvider.Bind(null,
-                            this.FilterByTypes(
-                                this.Compiler.ResolutionProvider.Resolve(new ModelObject[] { activeScopeSymbol }, ResolveKind.Name, nameStrings, new ResolutionInfo() { Node = node }, nua.ResolveFlags),
-                                nua.SymbolTypes),
-                            new BindingInfo() { Node = node });
+                        () => this.Compiler.BindingProvider.Bind(null, this.Compiler.ResolutionProvider.Resolve(ri));
                     Lazy<object> lazyValue = new Lazy<object>(lazySymbol, LazyThreadSafetyMode.ExecutionAndPublication);
                     this.SetLazyProperty(node, activeSymbol, activeProperty, lazyValue);
                     this.Data.RegisterLazySymbol(node, lazyValue);
